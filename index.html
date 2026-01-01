@@ -1,3 +1,23 @@
+<script>
+// Test de débogage
+window.debug = {
+    testAgents: function() {
+        console.log("=== DEBUG MODE ===");
+        console.log("1. Vérification dataManager:", window.dataManager ? "OK" : "MANQUANT");
+        console.log("2. Vérification uiManager:", window.uiManager ? "OK" : "MANQUANT");
+        console.log("3. Vérification mainApp:", window.mainApp ? "OK" : "MANQUANT");
+        console.log("4. Vérification agentsModule:", window.agentsModule ? "OK" : "MANQUANT");
+        
+        // Tester le chargement du fichier
+        fetch('js/modules/agents.js')
+            .then(r => console.log("5. Fichier agents.js:", r.ok ? "EXISTE" : "MANQUANT"))
+            .catch(e => console.log("5. Fichier agents.js: ERREUR", e));
+    }
+};
+
+// Exécuter après 3 secondes
+setTimeout(() => window.debug.testAgents(), 3000);
+</script>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
