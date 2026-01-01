@@ -4,7 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Système de Gestion des Agents (SGA)</title>
-    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Style de fallback si le CSS ne charge pas */
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        header { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 5px; 
+            margin-bottom: 20px;
+        }
+        h1 { 
+            margin: 0; 
+            font-size: 24px; 
+        }
+        #sub-title { 
+            margin: 10px 0 0 0; 
+            font-size: 18px; 
+            color: #ecf0f1; 
+        }
+        #loading {
+            padding: 30px;
+            text-align: center;
+            font-size: 18px;
+            color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,47 +53,103 @@
         </header>
         
         <div id="main-content" class="content">
-            <!-- Chargement dynamique -->
+            <!-- Menu par défaut en cas d'erreur JS -->
+            <div id="fallback-menu" style="display: none; text-align: center; padding: 20px;">
+                <h3 style="color: #e74c3c;">⚠️ JavaScript non chargé ou erreur</h3>
+                <p>Activez JavaScript ou vérifiez la console pour les erreurs.</p>
+                <div style="margin-top: 20px; color: #95a5a6;">
+                    <p>Structure attendue :</p>
+                    <ul style="text-align: left; display: inline-block;">
+                        <li>Gestion des Agents</li>
+                        <li>Planning</li>
+                        <li>Congés</li>
+                        <li>Statistiques</li>
+                    </ul>
+                </div>
+            </div>
+            
             <div id="loading">Chargement du menu...</div>
         </div>
         
-        <div id="overlay" class="overlay">
+        <div id="overlay" class="overlay" style="display: none;">
             <div id="popup-content" class="popup"></div>
         </div>
     </div>
     
-    <!-- Scripts dans l'ordre CORRECT -->
-    <script src="./js/constants.js"></script>
-    <script src="./js/dataManager.js"></script>
-    <script src="./js/utilities.js"></script>
-    <script src="./js/uiManager.js"></script>
-    <script src="./js/menuManager.js"></script>
+    <!-- Scripts dans l'ordre CORRECT pour les dépendances -->
+    <script src="js/constants.js"></script>
+    <script src="js/utilities.js"></script>
+    <script src="js/dataManager.js"></script>
+    <script src="js/uiManager.js"></script>
     
-    <!-- Modules (peut être chargé après) -->
-    <script src="./js/modules/agents.js"></script>
-    <script src="./js/modules/planning.js"></script>
-    <script src="./js/modules/leaves.js"></script>
-    <script src="./js/modules/statistics.js"></script>
-    <script src="./js/modules/panicCodes.js"></script>
-    <script src="./js/modules/radios.js"></script>
-    <script src="./js/modules/uniforms.js"></script>
-    <script src="./js/modules/warnings.js"></script>
-    <script src="./js/modules/holidays.js"></script>
-    <script src="./js/modules/export.js"></script>
-    <script src="./js/modules/config.js"></script>
+    <!-- INIT doit être avant les modules mais après les utilitaires -->
+    <script src="js/init.js"></script>
+    
+    <!-- Modules - utiliser async pour charger en parallèle -->
+    <script src="js/modules/agents.js"></script>
+    <script src="js/modules/planning.js"></script>
+    <script src="js/modules/leaves.js"></script>
+    <script src="js/modules/statistics.js"></script>
+    <script src="js/modules/panicCodes.js"></script>
+    <script src="js/modules/radios.js"></script>
+    <script src="js/modules/uniforms.js"></script>
+    <script src="js/modules/warnings.js"></script>
+    <script src="js/modules/holidays.js"></script>
+    <script src="js/modules/export.js"></script>
+    <script src="js/modules/config.js"></script>
+    
+    <!-- MenuManager dépend des modules -->
+    <script src="js/menuManager.js"></script>
     
     <!-- Main.js doit être DERNIER -->
-    <script src="./js/main.js"></script>
+    <script src="js/main.js"></script>
     
-    <!-- Script de débogage -->
+    <!-- Script de débogage amélioré -->
     <script>
-    console.log("✅ index.html complètement chargé");
+    console.log("🔧 Démarrage de l'application SGA");
+    
+    // Vérifier si les scripts sont chargés
     window.addEventListener('load', function() {
-        console.log("✅ Window loaded");
-        if (typeof MenuManager !== 'undefined') {
-            console.log("✅ MenuManager disponible");
-        } else {
-            console.error("❌ MenuManager non défini");
+        console.log("✅ Window complètement chargé");
+        
+        // Afficher le menu de fallback si JavaScript échoue
+        setTimeout(function() {
+            const loading = document.getElementById('loading');
+            const fallback = document.getElementById('fallback-menu');
+            
+            if (loading && loading.textContent.includes("Chargement")) {
+                console.warn("⚠️ L'application n'a pas terminé le chargement");
+                loading.style.display = 'none';
+                fallback.style.display = 'block';
+            }
+        }, 5000); // Après 5 secondes
+        
+        // Vérifier les objets globaux
+        const requiredGlobals = ['MenuManager', 'uiManager', 'dataManager'];
+        requiredGlobals.forEach(function(global) {
+            if (window[global]) {
+                console.log("✅ " + global + " disponible");
+            } else {
+                console.error("❌ " + global + " NON défini");
+            }
+        });
+    });
+    
+    // Gestionnaire d'erreurs global
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error("💥 ERREUR GLOBALE:", msg, "à", url, "ligne", lineNo);
+        return false;
+    };
+    
+    // Détecter les erreurs de chargement de scripts
+    document.addEventListener('DOMContentLoaded', function() {
+        const scripts = document.getElementsByTagName('script');
+        for (let script of scripts) {
+            script.onerror = function() {
+                console.error("❌ Échec chargement script:", this.src);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color:red">Erreur chargement: ' + this.src + '</p>';
+            };
         }
     });
     </script>
