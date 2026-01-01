@@ -1,420 +1,852 @@
-// MODULE GESTION DES AGENTS
-
-function displayAgentsList() {
-    let html = `
-        <div class="info-section">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <input type="text" id="searchAgent" placeholder="Rechercher nom ou code..." 
-                       style="width:70%; padding:10px; border-radius:5px; border:none;"
-                       onkeyup="filterAgents()">
-                <button class="popup-button blue" onclick="refreshAgentsList()">🔄</button>
-            </div>
-            <div id="list-container" style="margin-top:15px;">
-                ${generateAgentsTable(agents)}
-            </div>
-        </div>
-    `;
-    openPopup("📋 Liste des Agents", html, `
-        <button class="popup-button green" onclick="showAddAgentForm()">➕ Ajouter</button>
-        <button class="popup-button gray" onclick="closePopup()">Fermer</button>
-    `);
-}
-
-function generateAgentsTable(data) {
-    if (data.length === 0) return '<p style="text-align:center; color:#7f8c8d;">Aucun agent trouvé</p>';
+// MODULE GESTION DES AGENTS - Version professionnelle
+class AgentsModule {
+    constructor() {
+        console.log("👥 Module Agents initialisé");
+        this.name = "Gestion des Agents";
+        this.version = "2026.1.0";
+        this.currentFilter = '';
+        this.selectedAgent = null;
+    }
     
-    return `
-        <table class="classement-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Nom & Prénom</th>
-                    <th>Groupe</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${data.map(a => `
-                    <tr>
-                        <td><strong>${a.code}</strong></td>
-                        <td onclick="showAgentDetails('${a.code}')" style="cursor:pointer;">
-                            ${a.nom} ${a.prenom}
-                        </td>
-                        <td>${a.groupe}</td>
-                        <td><span class="status-badge ${a.statut === 'actif' ? 'active' : 'inactive'}">${a.statut}</span></td>
-                        <td style="white-space:nowrap;">
-                            <button class="action-btn small" onclick="showEditAgentForm('${a.code}')" title="Modifier">✏️</button>
-                            <button class="action-btn small red" onclick="confirmDeleteAgent('${a.code}')" title="Supprimer">🗑️</button>
-                            <button class="action-btn small blue" onclick="showAgentDetails('${a.code}')" title="Détails">👁️</button>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-function showAgentDetails(code) {
-    const a = agents.find(agent => agent.code === code);
-    if (!a) return;
-    
-    const details = `
-        <div class="info-section">
-            <h3>Informations Personnelles</h3>
-            <div class="info-item"><span class="info-label">Matricule:</span><span class="info-value">${a.matricule || 'N/A'}</span></div>
-            <div class="info-item"><span class="info-label">CIN:</span><span class="info-value">${a.cin || 'N/A'}</span></div>
-            <div class="info-item"><span class="info-label">Téléphone:</span><span class="info-value">${a.tel || 'N/A'}</span></div>
-            <div class="info-item"><span class="info-label">Poste:</span><span class="info-value">${a.poste || 'N/A'}</span></div>
-            <div class="info-item"><span class="info-label">Date d'entrée:</span><span class="info-value">${a.date_entree || 'N/A'}</span></div>
-            <div class="info-item"><span class="info-label">Date de sortie:</span><span class="info-value">${a.date_sortie || 'Actif'}</span></div>
+    // === INITIALISATION ===
+    async init() {
+        try {
+            console.log(`🚀 ${this.name} ${this.version} prêt`);
             
-            <h3 style="margin-top:20px;">Actions Rapides</h3>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="popup-button small blue" onclick="showAgentPlanning('${a.code}')">📅 Planning</button>
-                <button class="popup-button small green" onclick="showAgentStats('${a.code}')">📊 Stats</button>
-                <button class="popup-button small orange" onclick="showAddLeaveForAgent('${a.code}')">🏖️ Congé</button>
-            </div>
-        </div>
-    `;
-    
-    openPopup(`👤 Détails : ${a.nom} ${a.prenom}`, details, `
-        <button class="popup-button green" onclick="showEditAgentForm('${a.code}')">✏️ Modifier</button>
-        <button class="popup-button blue" onclick="displayAgentsList()">📋 Retour liste</button>
-        <button class="popup-button gray" onclick="closePopup()">Fermer</button>
-    `);
-}
-
-function showAddAgentForm() {
-    const html = `
-        <div class="info-section">
-            <h3>Ajouter un nouvel agent</h3>
-            <form id="addAgentForm" onsubmit="return addNewAgent(event)">
-                <div class="form-group">
-                    <label>Code Agent *</label>
-                    <input type="text" id="agentCode" required placeholder="Ex: A01" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Nom *</label>
-                    <input type="text" id="agentNom" required placeholder="Ex: Dupont" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Prénom *</label>
-                    <input type="text" id="agentPrenom" required placeholder="Ex: Alice" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Groupe *</label>
-                    <select id="agentGroupe" required class="form-input">
-                        <option value="">Sélectionner</option>
-                        <option value="A">Groupe A</option>
-                        <option value="B">Groupe B</option>
-                        <option value="C">Groupe C</option>
-                        <option value="D">Groupe D</option>
-                        <option value="E">Groupe E</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Matricule</label>
-                    <input type="text" id="agentMatricule" placeholder="Ex: MAT001" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>CIN</label>
-                    <input type="text" id="agentCIN" placeholder="Ex: AA123456" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Téléphone</label>
-                    <input type="tel" id="agentTel" placeholder="Ex: 0601-010101" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Poste</label>
-                    <input type="text" id="agentPoste" placeholder="Ex: Agent de sécurité" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Date d'entrée</label>
-                    <input type="date" id="agentDateEntree" class="form-input" value="${new Date().toISOString().split('T')[0]}">
-                </div>
-            </form>
-        </div>
-    `;
-    
-    openPopup("➕ Ajouter un Agent", html, `
-        <button class="popup-button green" onclick="document.getElementById('addAgentForm').submit()">💾 Enregistrer</button>
-        <button class="popup-button gray" onclick="displayAgentsManagementMenu()">Annuler</button>
-    `);
-}
-
-function addNewAgent(event) {
-    if (event) event.preventDefault();
-    const code = document.getElementById('agentCode').value.toUpperCase();
-    const nom = document.getElementById('agentNom').value;
-    const prenom = document.getElementById('agentPrenom').value;
-    const groupe = document.getElementById('agentGroupe').value;
-    
-    if (!code || !nom || !prenom || !groupe) {
-        showSnackbar("⚠️ Veuillez remplir les champs obligatoires (*)");
-        return false;
-    }
-    
-    if (agents.find(a => a.code === code)) {
-        showSnackbar(`⚠️ Le code ${code} existe déjà`);
-        return false;
-    }
-    
-    agents.push({
-        code: code, nom: nom, prenom: prenom, groupe: groupe,
-        matricule: document.getElementById('agentMatricule').value || '',
-        cin: document.getElementById('agentCIN').value || '',
-        tel: document.getElementById('agentTel').value || '',
-        poste: document.getElementById('agentPoste').value || '',
-        date_entree: document.getElementById('agentDateEntree').value || new Date().toISOString().split('T')[0],
-        date_sortie: null, statut: 'actif'
-    });
-    
-    saveData();
-    showSnackbar(`✅ Agent ${code} ajouté avec succès`);
-    displayAgentsList();
-    closePopup();
-    return false;
-}
-
-function showEditAgentList() {
-    if (agents.length === 0) {
-        showSnackbar("⚠️ Aucun agent à modifier");
-        return;
-    }
-    
-    let html = `
-        <div class="info-section">
-            <h3>Sélectionnez un agent à modifier</h3>
-            <input type="text" id="searchEditAgent" placeholder="Rechercher..." 
-                   style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:none;"
-                   onkeyup="filterEditAgents()">
-            <div id="edit-list-container">
-                ${generateEditAgentsList()}
-            </div>
-        </div>
-    `;
-    
-    openPopup("✏️ Modifier un Agent", html, `
-        <button class="popup-button gray" onclick="closePopup()">Annuler</button>
-    `);
-}
-
-function generateEditAgentsList() {
-    return `
-        <table class="classement-table">
-            <thead><tr><th>Code</th><th>Nom & Prénom</th><th>Groupe</th><th>Action</th></tr></thead>
-            <tbody>
-                ${agents.map(a => `
-                    <tr>
-                        <td>${a.code}</td>
-                        <td>${a.nom} ${a.prenom}</td>
-                        <td>${a.groupe}</td>
-                        <td><button class="popup-button small blue" onclick="showEditAgentForm('${a.code}')">Modifier</button></td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-function showEditAgentForm(code) {
-    const agent = agents.find(a => a.code === code);
-    if (!agent) {
-        showSnackbar("⚠️ Agent non trouvé");
-        return;
-    }
-    
-    const html = `
-        <div class="info-section">
-            <h3>Modifier l'agent ${agent.code}</h3>
-            <form id="editAgentForm" onsubmit="return updateAgent('${code}', event)">
-                <div class="form-group">
-                    <label>Code Agent</label>
-                    <input type="text" value="${agent.code}" readonly class="form-input" style="background:#34495e;">
-                </div>
-                <div class="form-group">
-                    <label>Nom *</label>
-                    <input type="text" id="editNom" value="${agent.nom}" required class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Prénom *</label>
-                    <input type="text" id="editPrenom" value="${agent.prenom}" required class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Groupe *</label>
-                    <select id="editGroupe" required class="form-input">
-                        <option value="A" ${agent.groupe === 'A' ? 'selected' : ''}>Groupe A</option>
-                        <option value="B" ${agent.groupe === 'B' ? 'selected' : ''}>Groupe B</option>
-                        <option value="C" ${agent.groupe === 'C' ? 'selected' : ''}>Groupe C</option>
-                        <option value="D" ${agent.groupe === 'D' ? 'selected' : ''}>Groupe D</option>
-                        <option value="E" ${agent.groupe === 'E' ? 'selected' : ''}>Groupe E</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Matricule</label>
-                    <input type="text" id="editMatricule" value="${agent.matricule || ''}" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>CIN</label>
-                    <input type="text" id="editCIN" value="${agent.cin || ''}" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Téléphone</label>
-                    <input type="tel" id="editTel" value="${agent.tel || ''}" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Poste</label>
-                    <input type="text" id="editPoste" value="${agent.poste || ''}" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Date d'entrée</label>
-                    <input type="date" id="editDateEntree" value="${agent.date_entree || ''}" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>Date de sortie</label>
-                    <input type="date" id="editDateSortie" value="${agent.date_sortie || ''}" class="form-input">
-                    <small style="color:#7f8c8d;">Remplir seulement si l'agent n'est plus actif</small>
-                </div>
-            </form>
-        </div>
-    `;
-    
-    openPopup(`✏️ Modifier ${agent.code}`, html, `
-        <button class="popup-button green" onclick="document.getElementById('editAgentForm').submit()">💾 Enregistrer</button>
-        <button class="popup-button blue" onclick="showEditAgentList()">↩️ Retour</button>
-        <button class="popup-button gray" onclick="closePopup()">Annuler</button>
-    `);
-}
-
-function updateAgent(oldCode, event) {
-    if (event) event.preventDefault();
-    const agentIndex = agents.findIndex(a => a.code === oldCode);
-    if (agentIndex === -1) {
-        showSnackbar("⚠️ Agent non trouvé");
-        return false;
-    }
-    
-    agents[agentIndex] = {
-        ...agents[agentIndex],
-        nom: document.getElementById('editNom').value,
-        prenom: document.getElementById('editPrenom').value,
-        groupe: document.getElementById('editGroupe').value,
-        matricule: document.getElementById('editMatricule').value,
-        cin: document.getElementById('editCIN').value,
-        tel: document.getElementById('editTel').value,
-        poste: document.getElementById('editPoste').value,
-        date_entree: document.getElementById('editDateEntree').value,
-        date_sortie: document.getElementById('editDateSortie').value || null,
-        statut: document.getElementById('editDateSortie').value ? 'inactif' : 'actif'
-    };
-    
-    saveData();
-    showSnackbar(`✅ Agent ${oldCode} modifié avec succès`);
-    displayAgentsList();
-    closePopup();
-    return false;
-}
-
-function showDeleteAgentList() {
-    const activeAgents = agents.filter(a => a.statut === 'actif');
-    if (activeAgents.length === 0) {
-        showSnackbar("⚠️ Aucun agent actif à supprimer");
-        return;
-    }
-    
-    let html = `
-        <div class="info-section">
-            <h3>Sélectionnez un agent à supprimer (marquer comme inactif)</h3>
-            <p style="color:#e74c3c; font-size:0.9em;">⚠️ Attention: Cette action marquera l'agent comme inactif mais conservera ses données historiques.</p>
-            <input type="text" id="searchDeleteAgent" placeholder="Rechercher..." 
-                   style="width:100%; padding:10px; margin:15px 0; border-radius:5px; border:none;"
-                   onkeyup="filterDeleteAgents()">
-            <div id="delete-list-container">
-                ${generateDeleteAgentsList(activeAgents)}
-            </div>
-        </div>
-    `;
-    
-    openPopup("🗑️ Supprimer un Agent", html, `
-        <button class="popup-button gray" onclick="closePopup()">Annuler</button>
-    `);
-}
-
-function generateDeleteAgentsList(agentsList) {
-    return `
-        <table class="classement-table">
-            <thead><tr><th>Code</th><th>Nom & Prénom</th><th>Groupe</th><th>Action</th></tr></thead>
-            <tbody>
-                ${agentsList.map(a => `
-                    <tr>
-                        <td>${a.code}</td>
-                        <td>${a.nom} ${a.prenom}</td>
-                        <td>${a.groupe}</td>
-                        <td><button class="popup-button small red" onclick="confirmDeleteAgent('${a.code}')">Supprimer</button></td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-function confirmDeleteAgent(code) {
-    const agent = agents.find(a => a.code === code);
-    if (!agent) return;
-    
-    if (confirm(`Êtes-vous sûr de vouloir supprimer l'agent ${code} (${agent.nom} ${agent.prenom}) ?\n\nCette action marquera l'agent comme inactif.`)) {
-        const agentIndex = agents.findIndex(a => a.code === code);
-        if (agentIndex !== -1) {
-            agents[agentIndex].date_sortie = new Date().toISOString().split('T')[0];
-            agents[agentIndex].statut = 'inactif';
-            saveData();
-            showSnackbar(`✅ Agent ${code} marqué comme inactif`);
-            displayAgentsList();
-            closePopup();
+            // Vérifier que dataManager est disponible
+            if (!window.dataManager) {
+                throw new Error("dataManager non disponible");
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("❌ Erreur initialisation module Agents:", error);
+            return false;
         }
     }
-}
-
-function filterAgents() {
-    const val = document.getElementById('searchAgent').value.toLowerCase();
-    const filtered = agents.filter(a => 
-        a.nom.toLowerCase().includes(val) || 
-        a.code.toLowerCase().includes(val) ||
-        a.prenom.toLowerCase().includes(val)
-    );
-    document.getElementById('list-container').innerHTML = generateAgentsTable(filtered);
-}
-
-function filterEditAgents() {
-    const val = document.getElementById('searchEditAgent').value.toLowerCase();
-    const filtered = agents.filter(a => 
-        a.nom.toLowerCase().includes(val) || 
-        a.code.toLowerCase().includes(val) ||
-        a.prenom.toLowerCase().includes(val)
-    );
-    document.getElementById('edit-list-container').innerHTML = generateEditAgentsList(filtered);
-}
-
-function filterDeleteAgents() {
-    const val = document.getElementById('searchDeleteAgent').value.toLowerCase();
-    const activeAgents = agents.filter(a => a.statut === 'actif');
-    const filtered = activeAgents.filter(a => 
-        a.nom.toLowerCase().includes(val) || 
-        a.code.toLowerCase().includes(val) ||
-        a.prenom.toLowerCase().includes(val)
-    );
-    document.getElementById('delete-list-container').innerHTML = generateDeleteAgentsList(filtered);
-}
-
-function refreshAgentsList() {
-    displayAgentsList();
-}
-
-function initializeTestDataWithConfirm() {
-    if (confirm("Voulez-vous initialiser avec des données de test ?\n\n⚠️ Attention : Cela écrasera les données existantes.")) {
-        initializeTestData();
-        showSnackbar("✅ Données de test initialisées");
-        displayAgentsManagementMenu();
+    
+    // === GESTION DE L'INTERFACE ===
+    
+    async displayAgentsList() {
+        try {
+            // Afficher le chargement
+            window.uiManager.showLoading('Chargement des agents...');
+            
+            // Récupérer les agents
+            const agents = window.dataManager.getAgents();
+            
+            const html = `
+                <div class="agents-management">
+                    <div class="agents-header">
+                        <h2>📋 Liste des Agents</h2>
+                        <div class="agents-controls">
+                            <div class="search-box">
+                                <input type="text" 
+                                       id="searchAgent" 
+                                       placeholder="Rechercher par nom, code ou groupe..."
+                                       onkeyup="agentsModule.filterAgents(this.value)"
+                                       class="search-input">
+                                <span class="search-icon">🔍</span>
+                            </div>
+                            <div class="buttons-group">
+                                <button class="btn btn-primary" onclick="agentsModule.showAddAgentForm()">
+                                    ➕ Ajouter
+                                </button>
+                                <button class="btn btn-secondary" onclick="agentsModule.refreshList()">
+                                    🔄 Actualiser
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="agents-stats">
+                        <div class="stat-card">
+                            <span class="stat-icon">👥</span>
+                            <span class="stat-value">${agents.length}</span>
+                            <span class="stat-label">Total</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-icon">✅</span>
+                            <span class="stat-value">${agents.filter(a => a.statut === 'actif').length}</span>
+                            <span class="stat-label">Actifs</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-icon">⏸️</span>
+                            <span class="stat-value">${agents.filter(a => a.statut === 'inactif').length}</span>
+                            <span class="stat-label">Inactifs</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-icon">📊</span>
+                            <span class="stat-value">${new Set(agents.map(a => a.groupe)).size}</span>
+                            <span class="stat-label">Groupes</span>
+                        </div>
+                    </div>
+                    
+                    <div class="agents-table-container">
+                        ${this.generateAgentsTable(agents)}
+                    </div>
+                </div>
+            `;
+            
+            // Mettre à jour l'interface
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.innerHTML = html;
+            }
+            
+            window.uiManager.hideLoading();
+            
+        } catch (error) {
+            console.error("❌ Erreur affichage liste agents:", error);
+            window.uiManager.hideLoading();
+            window.uiManager.showNotification('Erreur chargement des agents', 'error');
+        }
     }
+    
+    generateAgentsTable(agents) {
+        if (!agents || agents.length === 0) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <h3>Aucun agent trouvé</h3>
+                    <p>Commencez par ajouter votre premier agent.</p>
+                    <button class="btn btn-primary" onclick="agentsModule.showAddAgentForm()">
+                        ➕ Ajouter un agent
+                    </button>
+                </div>
+            `;
+        }
+        
+        return `
+            <table class="agents-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Nom & Prénom</th>
+                        <th>Groupe</th>
+                        <th>Téléphone</th>
+                        <th>Poste</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${agents.map(agent => `
+                        <tr>
+                            <td>
+                                <span class="agent-code">${agent.code}</span>
+                            </td>
+                            <td>
+                                <div class="agent-name" onclick="agentsModule.showAgentDetails('${agent.code}')">
+                                    <strong>${agent.prenom} ${agent.nom}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="group-badge group-${agent.groupe}">
+                                    ${agent.groupe}
+                                </span>
+                            </td>
+                            <td>${agent.tel || 'N/A'}</td>
+                            <td>${agent.poste || 'Non défini'}</td>
+                            <td>
+                                <span class="status-badge ${agent.statut}">
+                                    ${agent.statut === 'actif' ? '✅ Actif' : '⏸️ Inactif'}
+                                </span>
+                            </td>
+                            <td class="actions-cell">
+                                <button class="btn-icon" onclick="agentsModule.showAgentDetails('${agent.code}')" title="Détails">
+                                    👁️
+                                </button>
+                                <button class="btn-icon" onclick="agentsModule.showEditAgentForm('${agent.code}')" title="Modifier">
+                                    ✏️
+                                </button>
+                                <button class="btn-icon btn-danger" onclick="agentsModule.confirmDeleteAgent('${agent.code}')" title="Supprimer">
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+    
+    // === GESTION DES AGENTS ===
+    
+    async showAddAgentForm() {
+        try {
+            // Générer un code unique
+            const agents = window.dataManager.getAgents();
+            const existingCodes = agents.map(a => a.code);
+            let newCode = 'A01';
+            let counter = 1;
+            
+            while (existingCodes.includes(newCode)) {
+                counter++;
+                newCode = `A${counter.toString().padStart(2, '0')}`;
+            }
+            
+            const html = `
+                <div class="agent-form">
+                    <h2>➕ Ajouter un nouvel agent</h2>
+                    
+                    <form id="addAgentForm" onsubmit="return agentsModule.handleAddAgent(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="agentCode">Code Agent *</label>
+                                <input type="text" 
+                                       id="agentCode" 
+                                       value="${newCode}"
+                                       required 
+                                       class="form-control"
+                                       placeholder="Ex: A01">
+                                <small class="form-hint">Code unique identifiant l'agent</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentNom">Nom *</label>
+                                <input type="text" 
+                                       id="agentNom" 
+                                       required 
+                                       class="form-control"
+                                       placeholder="Ex: Dupont">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentPrenom">Prénom *</label>
+                                <input type="text" 
+                                       id="agentPrenom" 
+                                       required 
+                                       class="form-control"
+                                       placeholder="Ex: Alice">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentGroupe">Groupe *</label>
+                                <select id="agentGroupe" required class="form-control">
+                                    <option value="">Sélectionner un groupe</option>
+                                    <option value="A">Groupe A</option>
+                                    <option value="B">Groupe B</option>
+                                    <option value="C">Groupe C</option>
+                                    <option value="D">Groupe D</option>
+                                    <option value="E">Groupe E</option>
+                                    <option value="F">Groupe F</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentMatricule">Matricule</label>
+                                <input type="text" 
+                                       id="agentMatricule" 
+                                       class="form-control"
+                                       placeholder="Ex: MAT001">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentCIN">CIN / N° Identité</label>
+                                <input type="text" 
+                                       id="agentCIN" 
+                                       class="form-control"
+                                       placeholder="Ex: AA123456">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentTel">Téléphone</label>
+                                <input type="tel" 
+                                       id="agentTel" 
+                                       class="form-control"
+                                       placeholder="Ex: 0601-010101">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentPoste">Poste / Fonction</label>
+                                <input type="text" 
+                                       id="agentPoste" 
+                                       class="form-control"
+                                       placeholder="Ex: Agent de sécurité">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentDateEntree">Date d'entrée</label>
+                                <input type="date" 
+                                       id="agentDateEntree" 
+                                       class="form-control"
+                                       value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="agentEmail">Email (optionnel)</label>
+                                <input type="email" 
+                                       id="agentEmail" 
+                                       class="form-control"
+                                       placeholder="exemple@email.com">
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                💾 Enregistrer l'agent
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="agentsModule.displayAgentsList()">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Afficher dans le contenu principal
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.innerHTML = html;
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur affichage formulaire:", error);
+            window.uiManager.showNotification('Erreur affichage formulaire', 'error');
+        }
+    }
+    
+    async handleAddAgent(event) {
+        event.preventDefault();
+        
+        try {
+            // Récupérer les valeurs du formulaire
+            const code = document.getElementById('agentCode').value.toUpperCase().trim();
+            const nom = document.getElementById('agentNom').value.trim();
+            const prenom = document.getElementById('agentPrenom').value.trim();
+            const groupe = document.getElementById('agentGroupe').value;
+            
+            // Validation
+            if (!code || !nom || !prenom || !groupe) {
+                window.uiManager.showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+                return false;
+            }
+            
+            // Vérifier si le code existe déjà
+            const agents = window.dataManager.getAgents();
+            if (agents.some(a => a.code === code)) {
+                window.uiManager.showNotification(`Le code ${code} existe déjà`, 'error');
+                return false;
+            }
+            
+            // Créer l'objet agent
+            const newAgent = {
+                id: Date.now(),
+                code: code,
+                nom: nom,
+                prenom: prenom,
+                groupe: groupe,
+                matricule: document.getElementById('agentMatricule').value.trim(),
+                cin: document.getElementById('agentCIN').value.trim(),
+                tel: document.getElementById('agentTel').value.trim(),
+                poste: document.getElementById('agentPoste').value.trim(),
+                email: document.getElementById('agentEmail').value.trim(),
+                date_entree: document.getElementById('agentDateEntree').value || new Date().toISOString().split('T')[0],
+                date_sortie: null,
+                statut: 'actif',
+                date_creation: new Date().toISOString(),
+                date_modification: new Date().toISOString()
+            };
+            
+            // Ajouter via dataManager
+            const result = window.dataManager.addAgent(newAgent);
+            
+            if (result) {
+                window.uiManager.showNotification(`✅ Agent ${code} ajouté avec succès`, 'success');
+                setTimeout(() => {
+                    this.displayAgentsList();
+                }, 1000);
+                return true;
+            } else {
+                throw new Error('Erreur lors de l\'ajout');
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur ajout agent:", error);
+            window.uiManager.showNotification('Erreur lors de l\'ajout', 'error');
+            return false;
+        }
+    }
+    
+    async showAgentDetails(code) {
+        try {
+            const agent = window.dataManager.getAgentByCode(code);
+            if (!agent) {
+                window.uiManager.showNotification('Agent non trouvé', 'error');
+                return;
+            }
+            
+            const html = `
+                <div class="agent-details">
+                    <div class="details-header">
+                        <button class="btn btn-secondary" onclick="agentsModule.displayAgentsList()">
+                            ← Retour
+                        </button>
+                        <h2>👤 Détails de l'agent</h2>
+                        <div class="details-actions">
+                            <button class="btn btn-primary" onclick="agentsModule.showEditAgentForm('${code}')">
+                                ✏️ Modifier
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="details-body">
+                        <div class="agent-card">
+                            <div class="agent-avatar">
+                                <span class="avatar-icon">👤</span>
+                                <div class="agent-code-badge">${agent.code}</div>
+                            </div>
+                            
+                            <div class="agent-info">
+                                <h3>${agent.prenom} ${agent.nom}</h3>
+                                <p class="agent-position">${agent.poste || 'Poste non spécifié'}</p>
+                                
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Groupe:</span>
+                                        <span class="info-value group-badge group-${agent.groupe}">
+                                            ${agent.groupe}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Statut:</span>
+                                        <span class="info-value status-badge ${agent.statut}">
+                                            ${agent.statut === 'actif' ? '✅ Actif' : '⏸️ Inactif'}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Matricule:</span>
+                                        <span class="info-value">${agent.matricule || 'N/A'}</span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">CIN:</span>
+                                        <span class="info-value">${agent.cin || 'N/A'}</span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Téléphone:</span>
+                                        <span class="info-value">
+                                            ${agent.tel ? `<a href="tel:${agent.tel}">${agent.tel}</a>` : 'N/A'}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Email:</span>
+                                        <span class="info-value">
+                                            ${agent.email ? `<a href="mailto:${agent.email}">${agent.email}</a>` : 'N/A'}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Date d'entrée:</span>
+                                        <span class="info-value">${agent.date_entree || 'N/A'}</span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Date de sortie:</span>
+                                        <span class="info-value">${agent.date_sortie || 'En activité'}</span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Date création:</span>
+                                        <span class="info-value">${new Date(agent.date_creation).toLocaleDateString()}</span>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <span class="info-label">Dernière modification:</span>
+                                        <span class="info-value">${new Date(agent.date_modification).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="actions-section">
+                            <h3>Actions rapides</h3>
+                            <div class="actions-grid">
+                                <button class="action-card" onclick="mainApp.loadModule('planning')">
+                                    <span class="action-icon">📅</span>
+                                    <span class="action-label">Voir planning</span>
+                                </button>
+                                
+                                <button class="action-card" onclick="mainApp.loadModule('leaves')">
+                                    <span class="action-icon">🏖️</span>
+                                    <span class="action-label">Gérer les congés</span>
+                                </button>
+                                
+                                <button class="action-card" onclick="agentsModule.exportAgentData('${code}')">
+                                    <span class="action-icon">📤</span>
+                                    <span class="action-label">Exporter données</span>
+                                </button>
+                                
+                                <button class="action-card" onclick="agentsModule.printAgentCard('${code}')">
+                                    <span class="action-icon">🖨️</span>
+                                    <span class="action-label">Importer fiche</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Afficher dans le contenu principal
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.innerHTML = html;
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur affichage détails:", error);
+            window.uiManager.showNotification('Erreur affichage détails', 'error');
+        }
+    }
+    
+    async showEditAgentForm(code) {
+        try {
+            const agent = window.dataManager.getAgentByCode(code);
+            if (!agent) {
+                window.uiManager.showNotification('Agent non trouvé', 'error');
+                return;
+            }
+            
+            this.selectedAgent = agent;
+            
+            const html = `
+                <div class="agent-form">
+                    <div class="form-header">
+                        <button class="btn btn-secondary" onclick="agentsModule.showAgentDetails('${code}')">
+                            ← Retour
+                        </button>
+                        <h2>✏️ Modifier l'agent ${agent.code}</h2>
+                    </div>
+                    
+                    <form id="editAgentForm" onsubmit="return agentsModule.handleEditAgent(event, '${code}')">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="editCode">Code Agent</label>
+                                <input type="text" 
+                                       id="editCode" 
+                                       value="${agent.code}"
+                                       readonly 
+                                       class="form-control" 
+                                       style="background: #f8f9fa;">
+                                <small class="form-hint">Code non modifiable</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editNom">Nom *</label>
+                                <input type="text" 
+                                       id="editNom" 
+                                       value="${agent.nom}"
+                                       required 
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editPrenom">Prénom *</label>
+                                <input type="text" 
+                                       id="editPrenom" 
+                                       value="${agent.prenom}"
+                                       required 
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editGroupe">Groupe *</label>
+                                <select id="editGroupe" required class="form-control">
+                                    <option value="A" ${agent.groupe === 'A' ? 'selected' : ''}>Groupe A</option>
+                                    <option value="B" ${agent.groupe === 'B' ? 'selected' : ''}>Groupe B</option>
+                                    <option value="C" ${agent.groupe === 'C' ? 'selected' : ''}>Groupe C</option>
+                                    <option value="D" ${agent.groupe === 'D' ? 'selected' : ''}>Groupe D</option>
+                                    <option value="E" ${agent.groupe === 'E' ? 'selected' : ''}>Groupe E</option>
+                                    <option value="F" ${agent.groupe === 'F' ? 'selected' : ''}>Groupe F</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editMatricule">Matricule</label>
+                                <input type="text" 
+                                       id="editMatricule" 
+                                       value="${agent.matricule || ''}"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editCIN">CIN / N° Identité</label>
+                                <input type="text" 
+                                       id="editCIN" 
+                                       value="${agent.cin || ''}"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editTel">Téléphone</label>
+                                <input type="tel" 
+                                       id="editTel" 
+                                       value="${agent.tel || ''}"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editPoste">Poste / Fonction</label>
+                                <input type="text" 
+                                       id="editPoste" 
+                                       value="${agent.poste || ''}"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editEmail">Email</label>
+                                <input type="email" 
+                                       id="editEmail" 
+                                       value="${agent.email || ''}"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editDateEntree">Date d'entrée</label>
+                                <input type="date" 
+                                       id="editDateEntree" 
+                                       value="${agent.date_entree || ''}"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editDateSortie">Date de sortie</label>
+                                <input type="date" 
+                                       id="editDateSortie" 
+                                       value="${agent.date_sortie || ''}"
+                                       class="form-control">
+                                <small class="form-hint">Remplir uniquement si l'agent quitte l'entreprise</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editStatut">Statut</label>
+                                <select id="editStatut" class="form-control">
+                                    <option value="actif" ${agent.statut === 'actif' ? 'selected' : ''}>Actif</option>
+                                    <option value="inactif" ${agent.statut === 'inactif' ? 'selected' : ''}>Inactif</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                💾 Enregistrer les modifications
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="agentsModule.showAgentDetails('${code}')">
+                                Annuler
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="agentsModule.confirmDeleteAgent('${code}')">
+                                🗑️ Supprimer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Afficher dans le contenu principal
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.innerHTML = html;
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur affichage formulaire édition:", error);
+            window.uiManager.showNotification('Erreur affichage formulaire', 'error');
+        }
+    }
+    
+    async handleEditAgent(event, oldCode) {
+        event.preventDefault();
+        
+        try {
+            // Récupérer les nouvelles valeurs
+            const updates = {
+                nom: document.getElementById('editNom').value.trim(),
+                prenom: document.getElementById('editPrenom').value.trim(),
+                groupe: document.getElementById('editGroupe').value,
+                matricule: document.getElementById('editMatricule').value.trim(),
+                cin: document.getElementById('editCIN').value.trim(),
+                tel: document.getElementById('editTel').value.trim(),
+                poste: document.getElementById('editPoste').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                date_entree: document.getElementById('editDateEntree').value,
+                date_sortie: document.getElementById('editDateSortie').value || null,
+                statut: document.getElementById('editStatut').value,
+                date_modification: new Date().toISOString()
+            };
+            
+            // Validation
+            if (!updates.nom || !updates.prenom || !updates.groupe) {
+                window.uiManager.showNotification('Les champs nom, prénom et groupe sont obligatoires', 'error');
+                return false;
+            }
+            
+            // Mettre à jour via dataManager
+            const result = window.dataManager.updateAgent(oldCode, updates);
+            
+            if (result) {
+                window.uiManager.showNotification(`✅ Agent ${oldCode} modifié avec succès`, 'success');
+                setTimeout(() => {
+                    this.showAgentDetails(oldCode);
+                }, 1000);
+                return true;
+            } else {
+                throw new Error('Erreur lors de la modification');
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur modification agent:", error);
+            window.uiManager.showNotification('Erreur lors de la modification', 'error');
+            return false;
+        }
+    }
+    
+    async confirmDeleteAgent(code) {
+        try {
+            const agent = window.dataManager.getAgentByCode(code);
+            if (!agent) {
+                window.uiManager.showNotification('Agent non trouvé', 'error');
+                return;
+            }
+            
+            const confirmed = await window.uiManager.showConfirm(
+                `Êtes-vous sûr de vouloir supprimer l'agent ${code} (${agent.prenom} ${agent.nom}) ?`,
+                {
+                    title: 'Confirmation de suppression',
+                    confirmText: 'Supprimer',
+                    cancelText: 'Annuler',
+                    type: 'danger'
+                }
+            );
+            
+            if (confirmed) {
+                await this.deleteAgent(code);
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur confirmation suppression:", error);
+            window.uiManager.showNotification('Erreur lors de la suppression', 'error');
+        }
+    }
+    
+    async deleteAgent(code) {
+        try {
+            const result = window.dataManager.deleteAgent(code);
+            
+            if (result) {
+                window.uiManager.showNotification(`✅ Agent ${code} supprimé avec succès`, 'success');
+                setTimeout(() => {
+                    this.displayAgentsList();
+                }, 1000);
+            } else {
+                throw new Error('Erreur lors de la suppression');
+            }
+            
+        } catch (error) {
+            console.error("❌ Erreur suppression agent:", error);
+            window.uiManager.showNotification('Erreur lors de la suppression', 'error');
+        }
+    }
+    
+    // === FONCTIONS UTILITAIRES ===
+    
+    filterAgents(searchTerm) {
+        const agents = window.dataManager.getAgents();
+        const search = searchTerm.toLowerCase().trim();
+        
+        if (!search) {
+            // Afficher tous les agents
+            document.querySelector('.agents-table-container').innerHTML = 
+                this.generateAgentsTable(agents);
+            return;
+        }
+        
+        // Filtrer les agents
+        const filtered = agents.filter(agent => {
+            return (
+                agent.code.toLowerCase().includes(search) ||
+                agent.nom.toLowerCase().includes(search) ||
+                agent.prenom.toLowerCase().includes(search) ||
+                agent.groupe.toLowerCase().includes(search) ||
+                agent.poste?.toLowerCase().includes(search) ||
+                agent.tel?.includes(search) ||
+                agent.cin?.includes(search)
+            );
+        });
+        
+        // Mettre à jour le tableau
+        document.querySelector('.agents-table-container').innerHTML = 
+            this.generateAgentsTable(filtered);
+    }
+    
+    refreshList() {
+        this.displayAgentsList();
+    }
+    
+    exportAgentData(code) {
+        const agent = window.dataManager.getAgentByCode(code);
+        if (!agent) {
+            window.uiManager.showNotification('Agent non trouvé', 'error');
+            return;
+        }
+        
+        // Créer un objet exportable
+        const exportData = {
+            agent: agent,
+            exportDate: new Date().toISOString(),
+            system: 'SGA CleanCo 2026'
+        };
+        
+        // Convertir en JSON
+        const jsonData = JSON.stringify(exportData, null, 2);
+        
+        // Créer un blob et télécharger
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agent-${code}-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        window.uiManager.showNotification(`📤 Données de l'agent ${code} exportées`, 'success');
+    }
+    
+    printAgentCard(code) {
+        window.uiManager.showNotification('🖨️ Impression en cours de développement', 'info');
+        // Implémentation de l'impression à ajouter
+    }
+    
+    // === FONCTIONS DE COMPATIBILITÉ ===
+    
+    // Pour la compatibilité avec l'ancien code
+    static init() {
+        if (!window.agentsModule) {
+            window.agentsModule = new AgentsModule();
+            window.agentsModule.init();
+        }
+        return window.agentsModule;
+    }
+}
+
+// === INITIALISATION AUTOMATIQUE ===
+
+// Initialiser le module quand le DOM est chargé
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        AgentsModule.init();
+    });
+} else {
+    AgentsModule.init();
+}
+
+// Exporter pour modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AgentsModule;
 }
