@@ -1,47 +1,111 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <link rel="stylesheet" href="css/styles.css">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGA - CleanCo</title>
+    <title>Système de Gestion des Agents (SGA)</title>
+    <link rel="stylesheet" href="css/styles.css">
     <style>
-        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-        .menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
-        .menu-btn { padding: 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        /* Styles de fallback */
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        header { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 5px; 
+            margin-bottom: 20px;
+        }
+        h1 { margin: 0; font-size: 24px; }
+        #sub-title { margin: 10px 0 0 0; font-size: 18px; color: #ecf0f1; }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .menu-card {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📋 SYSTÈME DE GESTION DES AGENTS</h1>
-        <h2>Menu Principal</h2>
+        <header>
+            <h1>📋 SYSTÈME DE GESTION DES AGENTS (SGA)</h1>
+            <h2 id="sub-title">Menu Principal</h2>
+        </header>
         
-        <div class="menu">
-            <button class="menu-btn" onclick="loadModule('agents')">👥 Agents</button>
-            <button class="menu-btn" onclick="loadModule('planning')">📅 Planning</button>
-            <button class="menu-btn" onclick="loadModule('leaves')">🏖️ Congés</button>
-            <button class="menu-btn" onclick="loadModule('stats')">📊 Statistiques</button>
-        </div>
-        
-        <div id="content" style="margin-top: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <p>Sélectionnez un module ci-dessus.</p>
+        <div id="main-content">
+            <!-- Menu dynamique -->
+            <div id="menu-container" class="menu-grid"></div>
+            
+            <!-- Contenu du module -->
+            <div id="module-container" style="margin-top: 30px;"></div>
         </div>
     </div>
+
+    <!-- Scripts dans l'ordre -->
+    <script src="js/constants.js"></script>
+    <script src="js/utilities.js"></script>
+    <script src="js/dataManager.js"></script>
+    <script src="js/uiManager.js"></script>
     
+    <!-- Modules -->
+    <script src="js/modules/agents.js"></script>
+    <script src="js/modules/planning.js"></script>
+    <script src="js/modules/leaves.js"></script>
+    <script src="js/modules/statistics.js"></script>
+    
+    <!-- Suite des modules (optionnel - charger à la demande) -->
+    <!--
+    <script src="js/modules/panicCodes.js"></script>
+    <script src="js/modules/radios.js"></script>
+    <script src="js/modules/uniforms.js"></script>
+    <script src="js/modules/warnings.js"></script>
+    <script src="js/modules/holidays.js"></script>
+    <script src="js/modules/export.js"></script>
+    <script src="js/modules/config.js"></script>
+    -->
+    
+    <!-- Main.js dernier -->
+    <script src="js/main.js"></script>
+    
+    <!-- Fallback si échec -->
     <script>
-    function loadModule(module) {
-        const content = document.getElementById('content');
-        const modules = {
-            agents: '<h3>👥 Gestion des Agents</h3><p>Module de gestion des agents...</p>',
-            planning: '<h3>📅 Planning</h3><p>Module de planning...</p>',
-            leaves: '<h3>🏖️ Congés</h3><p>Module de gestion des congés...</p>',
-            stats: '<h3>📊 Statistiques</h3><p>Module de statistiques...</p>'
-        };
-        content.innerHTML = modules[module] || '<p>Module non disponible</p>';
-    }
-    
-    console.log('✅ Application SGA chargée (version minimaliste)');
+    setTimeout(() => {
+        if (!window.app || !window.app.initialized) {
+            document.getElementById('main-content').innerHTML = `
+                <div style="text-align:center; padding:40px;">
+                    <h3>⚠️ Chargement des modules...</h3>
+                    <p>L'application prend plus de temps que prévu.</p>
+                    <button onclick="location.reload()">🔄 Recharger</button>
+                </div>
+            `;
+        }
+    }, 5000);
     </script>
 </body>
 </html>
