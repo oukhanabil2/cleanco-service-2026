@@ -377,7 +377,40 @@ setTimeout(() => window.debug.testAgents(), 3000);
                 }
             });
         }
-        
+        <!-- Ajoutez ceci dans votre index.html -->
+<div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button onclick="forceLoadAgents()" style="padding: 10px; background: red; color: white; border: none; border-radius: 5px;">
+        🔴 TEST Agents
+    </button>
+</div>
+
+<script>
+function forceLoadAgents() {
+    console.log("=== FORCE LOAD AGENTS ===");
+    
+    // Vérifier les fichiers
+    fetch('js/modules/agents.js')
+        .then(r => console.log('agents.js:', r.ok ? '✅ EXISTE' : '❌ MANQUANT'))
+        .catch(e => console.log('agents.js: ❌ ERREUR', e));
+    
+    // Charger manuellement
+    const script = document.createElement('script');
+    script.src = 'js/modules/agents.js?v=' + Date.now();
+    script.onload = function() {
+        console.log('✅ agents.js chargé manuellement');
+        if (window.agentsModule) {
+            console.log('✅ agentsModule trouvé');
+            window.agentsModule.displayAgentsList();
+        } else {
+            console.log('❌ agentsModule NON trouvé');
+        }
+    };
+    script.onerror = function(e) {
+        console.log('❌ Erreur chargement:', e);
+    };
+    document.head.appendChild(script);
+}
+</script>
         // Exécuter cette vérification
         ensureElements();
     </script>
