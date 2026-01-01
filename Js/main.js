@@ -328,6 +328,15 @@ class MainApp {
             await this.loadModuleScript(moduleId);
             
             // Mettre à jour l'interface
+            case 'agents':
+    if (window.agentsModule) {
+        window.agentsModule.displayAgentsList();
+    } else {
+        this.loadModuleScript('agents').then(() => {
+            window.agentsModule.displayAgentsList();
+        });
+    }
+    break;
             await this.updateModuleUI(moduleId);
             
             this.hideLoading();
