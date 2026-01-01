@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Gestion des Agents (SGA)</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 SYSTÈME DE GESTION DES AGENTS (SGA)</h1>
+            <h2 id="sub-title">Menu Principal</h2>
+        </header>
+        
+        <div id="main-content" class="content">
+            <!-- Chargement dynamique -->
+            <div id="loading">Chargement du menu...</div>
+        </div>
+        
+        <div id="overlay" class="overlay">
+            <div id="popup-content" class="popup"></div>
+        </div>
+    </div>
+    
+    <!-- Scripts dans l'ordre CORRECT -->
+    <script src="./js/constants.js"></script>
+    <script src="./js/dataManager.js"></script>
+    <script src="./js/utilities.js"></script>
+    <script src="./js/uiManager.js"></script>
+    <script src="./js/menuManager.js"></script>
+    
+    <!-- Modules (peut être chargé après) -->
+    <script src="./js/modules/agents.js"></script>
+    <script src="./js/modules/planning.js"></script>
+    <script src="./js/modules/leaves.js"></script>
+    <script src="./js/modules/statistics.js"></script>
+    <script src="./js/modules/panicCodes.js"></script>
+    <script src="./js/modules/radios.js"></script>
+    <script src="./js/modules/uniforms.js"></script>
+    <script src="./js/modules/warnings.js"></script>
+    <script src="./js/modules/holidays.js"></script>
+    <script src="./js/modules/export.js"></script>
+    <script src="./js/modules/config.js"></script>
+    
+    <!-- Main.js doit être DERNIER -->
+    <script src="./js/main.js"></script>
+    
+    <!-- Script de débogage -->
+    <script>
+    console.log("✅ index.html complètement chargé");
+    window.addEventListener('load', function() {
+        console.log("✅ Window loaded");
+        if (typeof MenuManager !== 'undefined') {
+            console.log("✅ MenuManager disponible");
+        } else {
+            console.error("❌ MenuManager non défini");
+        }
+    });
+    </script>
+</body>
+</html>

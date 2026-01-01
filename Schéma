@@ -1,0 +1,25 @@
+project/
+├── index.html          # Fichier HTML principal
+├── css/
+│   └── styles.css     # Styles CSS
+├── js/
+│   ├── main.js        # Point d'entrée principal
+│   ├── constants.js   # Constantes globales
+│   ├── dataManager.js # Gestion des données (localStorage)
+│   ├── utilities.js   # Fonctions utilitaires
+│   ├── uiManager.js   # Gestion de l'interface utilisateur
+│   ├── menuManager.js # Gestion des menus
+│   ├── modules/
+│   │   ├── agents.js          # Module agents
+│   │   ├── planning.js        # Module planning
+│   │   ├── leaves.js          # Module congés
+│   │   ├── statistics.js      # Module statistiques
+│   │   ├── panicCodes.js      # Module codes panique
+│   │   ├── radios.js          # Module radios
+│   │   ├── uniforms.js        # Module habillement
+│   │   ├── warnings.js        # Module avertissements
+│   │   ├── holidays.js        # Module jours fériés
+│   │   ├── export.js          # Module exportations
+│   │   └── config.js          # Module configuration
+│   └── init.js        # Initialisation de l'application
+└── README.md          # Documentation
