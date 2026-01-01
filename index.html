@@ -1,146 +1,481 @@
-<!-- VERSION SIMPLIFIÉE PRÊTE À L'EMPLOI -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGA CleanCo</title>
+    <title>Système de Gestion des Agents (SGA) - CleanCo 2026</title>
+    
+    <!-- CSS principal -->
     <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Meta tags pour PWA -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Système de Gestion des Agents pour CleanCo Service 2026">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Styles de secours et de base -->
     <style>
-        /* Styles inclus au cas où le CSS externe échoue */
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .app-header { background: rgba(255,255,255,0.95); padding: 30px; border-radius: 20px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-        .app-title { color: #2c3e50; margin: 0; font-size: 2.5rem; }
-        .app-subtitle { color: #7f8c8d; margin: 10px 0 0; font-size: 1.2rem; }
-        .modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .module-card { background: white; border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s ease; border: 3px solid transparent; }
-        .module-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); border-color: #3498db; }
-        .module-icon { font-size: 3rem; margin-bottom: 15px; }
-        .module-name { font-size: 1.3rem; color: #2c3e50; margin: 0 0 10px; }
-        .module-desc { color: #7f8c8d; font-size: 0.95rem; }
-        .module-content { background: white; border-radius: 15px; padding: 30px; margin-top: 30px; display: none; }
-        .back-btn { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+        /* RESET et styles de base */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --gray-color: #7f8c8d;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; 
+            margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        /* Conteneur principal */
+        .app-container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        /* En-tête de l'application */
+        .app-header { 
+            background: rgba(255,255,255,0.97); 
+            padding: 30px; 
+            border-radius: 20px; 
+            margin-bottom: 30px; 
+            box-shadow: var(--box-shadow); 
+            text-align: center;
+            animation: slideDown 0.5s ease;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .app-title { 
+            color: var(--primary-color); 
+            margin: 0 0 10px 0; 
+            font-size: 2.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .app-subtitle { 
+            color: var(--gray-color); 
+            margin: 0; 
+            font-size: 1.3rem;
+            font-weight: 400;
+        }
+        
+        .app-version {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        
+        /* Zone de contenu principale */
+        #main-content {
+            background: rgba(255,255,255,0.97);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--box-shadow);
+            animation: fadeIn 0.5s ease;
+            min-height: 500px;
+            position: relative;
+        }
+        
+        /* État de chargement */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        /* Pied de page */
+        .app-footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .app-footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        
+        .app-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Messages d'erreur */
+        .error-message {
+            background: var(--danger-color);
+            color: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            text-align: center;
+            animation: shake 0.5s ease;
+        }
+        
+        /* Boutons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 10px;
+            }
+            
+            .app-header {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .app-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .app-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            #main-content {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .app-title {
+                font-size: 1.8rem;
+            }
+            
+            .app-subtitle {
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <!-- En-tête de l'application -->
         <header class="app-header">
-            <h1 class="app-title">📋 SGA CleanCo 2026</h1>
+            <h1 class="app-title">
+                <span>📋</span>
+                SGA CleanCo 2026
+            </h1>
             <p class="app-subtitle">Système de Gestion des Agents - Version Professionnelle</p>
+            <div class="app-version">Version 1.0.0</div>
         </header>
         
-        <main>
-            <div class="modules-grid" id="modulesGrid">
-                <!-- Modules générés dynamiquement -->
+        <!-- Contenu principal dynamique -->
+        <main id="main-content">
+            <!-- État initial de chargement -->
+            <div class="loading-state" id="initial-loading">
+                <div class="loading-spinner"></div>
+                <h2 style="color: var(--primary-color); margin: 20px 0 10px 0;">Initialisation de l'application...</h2>
+                <p style="color: var(--gray-color);">Chargement des modules et des données</p>
             </div>
             
-            <div id="moduleView" class="module-content">
-                <button class="back-btn" onclick="showModules()">← Retour au menu</button>
-                <div id="moduleContent"></div>
-            </div>
+            <!-- Titre dynamique (sera mis à jour par JavaScript) -->
+            <h2 id="sub-title" style="display: none;">Menu Principal</h2>
+            
+            <!-- Contenu sera injecté ici par JavaScript -->
         </main>
+        
+        <!-- Pied de page -->
+        <footer class="app-footer">
+            <p>© 2024-2026 CleanCo Service. Tous droits réservés.</p>
+            <p>
+                <a href="javascript:void(0)" onclick="showAbout()">À propos</a> | 
+                <a href="javascript:void(0)" onclick="showHelp()">Aide</a> | 
+                <a href="javascript:void(0)" onclick="showPrivacy()">Confidentialité</a>
+            </p>
+        </footer>
     </div>
 
-    <!-- JavaScript unifié -->
+    <!-- === SCRIPTS DANS L'ORDRE DÉPENDANT === -->
+    
+    <!-- 1. Constantes et configuration -->
+    <script src="js/constants.js"></script>
+    
+    <!-- 2. Gestionnaire de données -->
+    <script src="js/dataManager.js"></script>
+    
+    <!-- 3. Gestionnaire d'interface -->
+    <script src="js/uiManager.js"></script>
+    
+    <!-- 4. Modules optionnels (chargés dynamiquement plus tard) -->
+    <!-- <script src="js/modules/agents.js"></script> -->
+    <!-- <script src="js/modules/planning.js"></script> -->
+    <!-- <script src="js/modules/leaves.js"></script> -->
+    <!-- <script src="js/modules/statistics.js"></script> -->
+    <!-- <script src="js/modules/panicCodes.js"></script> -->
+    <!-- <script src="js/modules/radios.js"></script> -->
+    <!-- <script src="js/modules/uniforms.js"></script> -->
+    <!-- <script src="js/modules/warnings.js"></script> -->
+    <!-- <script src="js/modules/holidays.js"></script> -->
+    <!-- <script src="js/modules/export.js"></script> -->
+    <!-- <script src="js/modules/config.js"></script> -->
+    
+    <!-- 5. Application principale -->
+    <script src="js/main.js"></script>
+    
+    <!-- 6. Script d'initialisation et fonctions globales -->
     <script>
-    // CONSTANTS
-    const MODULES = [
-        { id: 'agents', name: '👥 Agents', desc: 'Gestion complète des agents', icon: '👥', color: '#3498db' },
-        { id: 'planning', name: '📅 Planning', desc: 'Planification des interventions', icon: '📅', color: '#2ecc71' },
-        { id: 'leaves', name: '🏖️ Congés', desc: 'Gestion des congés et absences', icon: '🏖️', color: '#e67e22' },
-        { id: 'statistics', name: '📊 Statistiques', desc: 'Tableaux de bord et analyses', icon: '📊', color: '#9b59b6' },
-        { id: 'panic', name: '🚨 Codes Panique', desc: 'Gestion des codes d\'urgence', icon: '🚨', color: '#e74c3c' },
-        { id: 'radios', name: '📻 Radios', desc: 'Gestion du parc radio', icon: '📻', color: '#1abc9c' },
-        { id: 'uniforms', name: '👕 Habillement', desc: 'Gestion des tenues et équipements', icon: '👕', color: '#34495e' },
-        { id: 'warnings', name: '⚠️ Avertissements', desc: 'Suivi des avertissements', icon: '⚠️', color: '#f39c12' },
-        { id: 'holidays', name: '🎉 Jours Fériés', desc: 'Calendrier des jours fériés', icon: '🎉', color: '#d35400' }
-    ];
-
-    // APP CORE
-    const app = {
-        currentModule: null,
+        // Fonctions globales pour le pied de page
+        function showAbout() {
+            if (window.uiManager) {
+                uiManager.showPopup({
+                    title: 'À propos de SGA CleanCo',
+                    content: `
+                        <div style="padding: 15px;">
+                            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Système de Gestion des Agents</h3>
+                            <p><strong>Version :</strong> 1.0.0 (2026)</p>
+                            <p><strong>Développé pour :</strong> CleanCo Service</p>
+                            <p><strong>Description :</strong> Application complète de gestion des agents de nettoyage, planning, congés et statistiques.</p>
+                            <hr style="margin: 20px 0;">
+                            <p><strong>Fonctionnalités principales :</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>Gestion des agents et équipes</li>
+                                <li>Planification automatisée</li>
+                                <li>Suivi des congés et absences</li>
+                                <li>Statistiques et rapports</li>
+                                <li>Gestion des équipements</li>
+                            </ul>
+                        </div>
+                    `,
+                    size: 'medium'
+                });
+            } else {
+                alert('À propos de SGA CleanCo\nVersion 1.0.0\n© 2026 CleanCo Service');
+            }
+        }
         
-        init() {
-            console.log('🚀 SGA CleanCo initialisé');
-            this.renderModules();
-            this.checkStorage();
-        },
+        function showHelp() {
+            if (window.uiManager) {
+                uiManager.showPopup({
+                    title: 'Aide et support',
+                    content: `
+                        <div style="padding: 15px;">
+                            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Centre d'aide</h3>
+                            <p>Pour obtenir de l'aide :</p>
+                            <ul style="margin-left: 20px; margin-bottom: 20px;">
+                                <li><strong>Support technique :</strong> support@cleanco.com</li>
+                                <li><strong>Téléphone :</strong> +212 XXX XXX XXX</li>
+                                <li><strong>Horaires :</strong> Lundi - Vendredi, 9h-18h</li>
+                            </ul>
+                            <hr style="margin: 20px 0;">
+                            <p><strong>Raccourcis utiles :</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li><kbd>Échap</kbd> : Retour au menu principal</li>
+                                <li><kbd>F5</kbd> : Actualiser l'application</li>
+                                <li><kbd>Ctrl + S</kbd> : Sauvegarder les données</li>
+                            </ul>
+                        </div>
+                    `,
+                    size: 'medium'
+                });
+            }
+        }
         
-        renderModules() {
-            const grid = document.getElementById('modulesGrid');
-            grid.innerHTML = MODULES.map(module => `
-                <div class="module-card" onclick="app.loadModule('${module.id}')" 
-                     style="border-color: ${module.color}">
-                    <div class="module-icon">${module.icon}</div>
-                    <h3 class="module-name">${module.name}</h3>
-                    <p class="module-desc">${module.desc}</p>
-                </div>
-            `).join('');
-        },
+        function showPrivacy() {
+            if (window.uiManager) {
+                uiManager.showPopup({
+                    title: 'Politique de confidentialité',
+                    content: `
+                        <div style="padding: 15px; max-height: 400px; overflow-y: auto;">
+                            <h3 style="color: var(--primary-color); margin-bottom: 15px;">Confidentialité des données</h3>
+                            <p><strong>Collecte de données :</strong></p>
+                            <p>Cette application stocke localement sur votre appareil :</p>
+                            <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                <li>Informations sur les agents</li>
+                                <li>Plannings et congés</li>
+                                <li>Historique des modifications</li>
+                            </ul>
+                            <p><strong>Stockage :</strong> Toutes les données sont stockées localement dans votre navigateur (localStorage). Aucune donnée n'est envoyée à des serveurs externes.</p>
+                            <p><strong>Sécurité :</strong> L'accès à l'application est protégé par mot de passe. Les données sont sauvegardées automatiquement.</p>
+                            <p><strong>Suppression :</strong> Pour supprimer toutes les données, utilisez l'option "Réinitialiser" dans les paramètres ou effacez le cache de votre navigateur.</p>
+                        </div>
+                    `,
+                    size: 'medium'
+                });
+            }
+        }
         
-        loadModule(moduleId) {
-            this.currentModule = moduleId;
-            const module = MODULES.find(m => m.id === moduleId);
+        // Gestion des erreurs globales
+        window.addEventListener('error', function(event) {
+            console.error('❌ Erreur globale:', event.error);
             
-            document.getElementById('modulesGrid').style.display = 'none';
-            document.getElementById('moduleView').style.display = 'block';
-            
-            const content = document.getElementById('moduleContent');
-            content.innerHTML = `
-                <h2 style="color: ${module.color}">${module.icon} ${module.name}</h2>
-                <p>${module.desc}</p>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                    <h4>Fonctionnalités :</h4>
-                    <ul>
-                        <li>Interface optimisée pour mobile</li>
-                        <li>Sauvegarde automatique (localStorage)</li>
-                        <li>Export des données</li>
-                        <li>Recherche et filtres avancés</li>
-                    </ul>
-                    <p style="margin-top: 20px; font-style: italic;">
-                        Module en cours de développement...
-                    </p>
-                </div>
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'error-message';
+            errorContainer.innerHTML = `
+                <strong>Erreur :</strong> ${event.error.message || 'Erreur inconnue'}
+                <br><small>Veuillez rafraîchir la page ou contacter le support.</small>
             `;
             
-            // Charger le module spécifique si disponible
-            this.loadModuleScript(moduleId);
-        },
-        
-        loadModuleScript(moduleId) {
-            const scriptPath = `js/modules/${moduleId}.js`;
-            fetch(scriptPath)
-                .then(response => {
-                    if (response.ok) {
-                        console.log(`Module ${moduleId} trouvé`);
-                        // Ici, vous pourriez charger le script dynamiquement
-                    } else {
-                        console.log(`Module ${moduleId} utilise la version par défaut`);
-                    }
-                })
-                .catch(error => console.log('Module non spécifique'));
-        },
-        
-        checkStorage() {
-            if (typeof localStorage === 'undefined') {
-                alert('⚠️ localStorage non disponible. Les données seront perdues à la fermeture.');
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.appendChild(errorContainer);
             }
-        },
+        });
         
-        showModules() {
-            document.getElementById('modulesGrid').style.display = 'grid';
-            document.getElementById('moduleView').style.display = 'none';
-        }
-    };
-
-    // Initialisation
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => app.init());
-    } else {
-        app.init();
-    }
+        // Fallback si l'application ne se charge pas
+        setTimeout(function() {
+            const loading = document.getElementById('initial-loading');
+            const subTitle = document.getElementById('sub-title');
+            
+            if (loading && loading.style.display !== 'none' && !window.mainApp) {
+                loading.innerHTML = `
+                    <div style="color: var(--danger-color); text-align: center;">
+                        <h2>⚠️ Délai de chargement dépassé</h2>
+                        <p>L'application met trop de temps à charger.</p>
+                        <p>Veuillez vérifier :</p>
+                        <ul style="text-align: left; display: inline-block; margin: 15px 0;">
+                            <li>Votre connexion internet</li>
+                            <li>La console du navigateur (F12) pour les erreurs</li>
+                            <li>Que JavaScript est activé</li>
+                        </ul>
+                        <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">
+                            🔄 Réessayer
+                        </button>
+                        <button onclick="window.showSafeMode()" class="btn btn-secondary" style="margin-top: 10px;">
+                            🔧 Mode sans échec
+                        </button>
+                    </div>
+                `;
+                
+                if (subTitle) subTitle.style.display = 'none';
+            }
+        }, 10000); // 10 secondes
+        
+        // Fonction de mode sans échec
+        window.showSafeMode = function() {
+            if (confirm('Mode sans échec :\n• Désactiver le chargement des modules\n• Effacer le cache local\n• Réinitialiser l\'interface\n\nContinuer ?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                location.reload();
+            }
+        };
+        
+        // Initialisation de l'application (redondante avec main.js mais sécurisée)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOM chargé - démarrage application');
+            
+            // Masquer le chargement initial après 2 secondes max
+            setTimeout(function() {
+                const loading = document.getElementById('initial-loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+                
+                const subTitle = document.getElementById('sub-title');
+                if (subTitle) {
+                    subTitle.style.display = 'block';
+                }
+            }, 2000);
+        });
     </script>
 </body>
 </html>
